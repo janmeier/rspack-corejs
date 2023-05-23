@@ -1,5 +1,6 @@
 import path from "path";
 import { fileURLToPath } from "url";
+import HtmlWebpackPlugin from 'html-webpack-plugin'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isRunningWebpack = !!process.env.WEBPACK;
@@ -19,11 +20,33 @@ const config = {
   },
   module: {
     rules: [
-      {
-        test: /\.js$/,
-        resourceQuery: /raw/,
-        type: "asset/source",
-      },
+      isRunningWebpack
+        ? {
+            test: /\.jsx?$/i,
+            exclude: [path.resolve(__dirname, 'node_modules')],
+            use: [
+              {
+                loader: "babel-loader",
+                options: {
+                  presets: [
+                    [
+                      "@babel/env",
+                      {
+                        useBuiltIns: "usage",
+                        corejs: "3.30.2",
+                        targets: ["safari>=12"],
+                      },
+                    ],
+                  ],
+                },
+              },
+            ],
+          }
+        : {
+            test: /\.js$/,
+            include: [path.resolve(__dirname, 'src')],
+            type: "javascript/auto",
+          },
     ],
   },
   output: {
@@ -37,6 +60,24 @@ const config = {
       "./answer": path.resolve(__dirname, "./src/answer.js?raw"),
     },
   },
+  plugins: [isRunningWebpack ? new HtmlWebpackPlugin({
+    title: 'Webpack'
+  }) : null].filter(Boolean)
 };
+
+if (isRunningRspack) {
+  config.builtins = {
+    presetEnv: {
+      targets: ["safari>=12"],
+      coreJs: "3.30.2",
+      mode: "usage",
+    },
+    html: [
+      {
+        title: "rspack",
+      },
+    ],
+  };
+}
 
 export default config;
